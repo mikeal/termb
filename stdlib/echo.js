@@ -1,5 +1,6 @@
+
 const cli = async term => {
-  throw new Error('save!')
+  return term.write(term.args.join(' '))
 }
 
 export { cli }

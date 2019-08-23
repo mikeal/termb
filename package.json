@@ -9,5 +9,15 @@
   },
   "keywords": [],
   "author": "Mikeal Rogers <mikeal.rogers@gmail.com> (https://www.mikealrogers.com/)",
-  "license": "(Apache-2.0 AND MIT)"
+  "license": "(Apache-2.0 AND MIT)",
+  "devDependencies": {
+    "babel-eslint": "^10.0.2"
+  },
+  "dependencies": {
+    "standard": "^14.0.2"
+  }, 
+  "standard": {
+    "parser": "babel-eslint",
+    "ignore": ["cli.js"]
+  }
 }

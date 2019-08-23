@@ -1,14 +1,17 @@
 import { FS, userFS } from './fs.js'
+import { PassThrough } from 'stream'
 
 /* This is the primary interface CLI developers
  * interact with.
  */
+
 class TerminalB {
   constructor (module, args) {
     this.appFS = new FS({})
     this.userFS = userFS // only for stdlib
     this.args = args
   }
+
   log (...args) {
     this.write(args.join('\n') + '\n')
   }
@@ -18,37 +21,49 @@ class Command {
   constructor (module, args) {
     this.module = module
     this.term = new TerminalB(module, args)
-    this.finished = new Promise((resolve, reject) => {
-      this._finished = [resolve, reject]
-    })
+    this.io = new PassThrough()
+    this._buffered = []
+    this._pendingRead = false
   }
-  config (next) {
+
+  async config () {
+    this.sender = await this.sender // load in order
     // proxy all output by default
-    this.term.write = (...args) => this.write(...args)
+    this.term.write = (...args) => this.io.write(...args)
+
+    // set reader api on term, use closures for security
+    this.term.reader = () => {
+      if (this.sender) return this.sender.io.pipe(new PassThrough())
+      else {
+        let s = new PassThrough()
+        s.end()
+        return s
+      }
+    }
   }
-  write (...args) {
-    this.next.write(...args)
+
+  async run () {
+    let ret = await this.module.cli(this.term)
+    this.io.end()
+    return ret
   }
-  run () {
-    return this.module.cli(this.term)
-  }
+
   async shell (lines) {
-    const sep = lines.shift()
     const next = await lines.shift()
-    
+    await this.config()
+
     if (!next) {
-      this.run()
-      return this.finished
+      return this.run()
     }
     this.next = next
-    this.config(next)
-    next.shell(lines)
-    this.run()
+    await this.config()
+    return Promise.all([this.run(), next.shell(lines)])
   }
 }
 
 class Privileged extends Command {
-  
+
 }
 
 export { Command, Privileged }
+
