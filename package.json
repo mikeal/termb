@@ -5,19 +5,23 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./cli.js test --all"
   },
   "keywords": [],
   "author": "Mikeal Rogers <mikeal.rogers@gmail.com> (https://www.mikealrogers.com/)",
   "license": "(Apache-2.0 AND MIT)",
   "devDependencies": {
-    "babel-eslint": "^10.0.2"
+    "babel-eslint": "^10.0.2",
+    "c8": "^5.0.1",
+    "hundreds": "0.0.2"
   },
   "dependencies": {
     "standard": "^14.0.2"
-  }, 
+  },
   "standard": {
     "parser": "babel-eslint",
-    "ignore": ["cli.js"]
+    "ignore": [
+      "cli.js"
+    ]
   }
 }
