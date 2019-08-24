@@ -4,7 +4,7 @@ const cli = async term => {
   for await (const chunk of reader) {
     parts.push(chunk)
   }
-  return term.userFS.put(term.args[0], parts.join(''))
+  return term.env.userFS.put(term.args[0], parts.join(''))
 }
 
 export { cli }

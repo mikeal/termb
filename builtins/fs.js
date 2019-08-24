@@ -16,6 +16,7 @@ class FS {
   }
 }
 
-const userFS = new FS({ 'test.text': 'hello world' })
+// temporary, for development only 
+const userFS = new FS({})
 
 export { userFS, FS }

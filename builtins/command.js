@@ -1,4 +1,4 @@
-import { FS, userFS } from './fs.js'
+import { FS } from './fs.js'
 import { PassThrough } from 'stream'
 
 /* This is the primary interface CLI developers
@@ -6,9 +6,9 @@ import { PassThrough } from 'stream'
  */
 
 class TerminalB {
-  constructor (module, args) {
+  constructor (module, args, env) {
     this.appFS = new FS({})
-    this.userFS = userFS // only for stdlib
+    this.env = env
     this.args = args
   }
 
@@ -18,9 +18,10 @@ class TerminalB {
 }
 
 class Command {
-  constructor (module, args) {
+  constructor (module, args, env) {
     this.module = module
-    this.term = new TerminalB(module, args)
+    this.env = env
+    this.term = new TerminalB(module, args, env)
     this.io = new PassThrough()
     this._buffered = []
     this._pendingRead = false
@@ -62,7 +63,11 @@ class Command {
 }
 
 class Privileged extends Command {
-
+  config (...args) {
+    let ret = super.config(...args)
+    this.term.env = this.env
+    return ret
+  }
 }
 
 export { Command, Privileged }

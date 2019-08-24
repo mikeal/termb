@@ -2,10 +2,12 @@ class Test {
   constructor (shellModule, env) {
     this.shellModule = shellModule
     this.env = () => Object.assign({}, env, this._env(env))
+    this.mockFS = {}
   }
 
   _env (env) {
     let stdout = ''
+    const userFS = new env.FS(this.mockFS)
     class Stdout extends env.Stdout {
       get output () {
         return {
@@ -16,7 +18,7 @@ class Test {
       }
     }
     const results = () => ({ stdout })
-    return { Stdout, results }
+    return { Stdout, results, userFS }
   }
 
   ok (...args) {
