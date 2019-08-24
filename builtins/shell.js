@@ -1,9 +1,5 @@
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
-import { Command, Privileged } from './command.js'
-import After from './after.js'
-import Stdout from './stdout.js'
-import Daemon from './daemon.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __basedir = dirname(__filename)
@@ -25,7 +21,7 @@ const __basedir = dirname(__filename)
 const stdlib = new Set(['echo', 'ls', 'save', 'help'])
 const helpers = new Set(['help', '-h', '--help'])
 
-const load = async line => {
+const load = async (line, env) => {
   if (!line) throw new Error('No command given to run')
 
   // standardized (forced) help forms
@@ -36,45 +32,46 @@ const load = async line => {
   const [cmd, ...args] = line
   if (!cmd) throw new Error('line is missing command')
   const module = await import(__basedir + `/../stdlib/${cmd}.js`)
-  const _Class = stdlib.has(cmd) ? Privileged : Command
-  const command = new _Class(module, args)
+  const _Class = stdlib.has(cmd) ? env.Privileged : env.Command
+  const command = new _Class(module, args, env)
   command.name = cmd
   return command
 }
 
 const separators = new Set(['&', '&&', '|', '>'])
 
-const parse = string => {
-  let line = []
-  const lines = []
-  let split = string.split(' ')
+const shell = async (string, env) => {
+  const defaults = [null, null, env]
+  const parse = string => {
+    let line = []
+    const lines = []
+    let split = string.split(' ')
 
-  const lc = (...args) => args.forEach(a => lines.push(a))
+    const lc = (...args) => args.forEach(a => lines.push(a))
 
-  while (split.length) {
-    const part = split.shift()
-    if (separators.has(part)) {
-      if (line.length) {
-        lines.push(load(line))
-        line = []
+    while (split.length) {
+      const part = split.shift()
+      if (separators.has(part)) {
+        if (line.length) {
+          lines.push(load(line, env))
+          line = []
+        }
+        // eslint-ignore-else
+        if (part === '&') lc(new env.Stdout(...defaults), new env.Daemon(...defaults))
+        else if (part === '&&') lc(new env.Stdout(...defaults), new env.After(...defaults))
+        else if (part === '>') split = ['|', 'save'].concat(split)
+        // note that we do nothing on pipe, the default behavior
+        // is for one commands output to be sent to the next.
+      } else {
+        line.push(part)
       }
-      // eslint-ignore-else
-      if (part === '&') lc(new Stdout(), new Daemon())
-      else if (part === '&&') lc(new Stdout(), new After())
-      else if (part === '>') split = ['|', 'save'].concat(split)
-      // note that we do nothing on pipe, the default behavior
-      // is for one commands output to be sent to the next.
-    } else {
-      line.push(part)
     }
+    if (line.length) lc(new env.Stdout(), load(line, env))
+    if (!(lines[lines.length - 1] instanceof env.Daemon)) lines.push(new env.Stdout(...defaults))
+
+    return lines
   }
-  if (line.length) lc(new Stdout(), load(line))
-  if (!(lines[lines.length - 1] instanceof Daemon)) lines.push(new Stdout())
-
-  return lines
-}
-
-const shell = async string => {
+  
   const commands = parse(string)
   let sender = null
   const first = await commands.shift()
