@@ -77,10 +77,6 @@ const parse = string => {
 const shell = async string => {
   const commands = parse(string)
   let sender = null
-  for (let command of commands) {
-    command.sender = sender
-    sender = command
-  }
   const first = await commands.shift()
   return first.shell(commands)
 }

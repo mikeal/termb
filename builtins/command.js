@@ -26,10 +26,11 @@ class Command {
     this._pendingRead = false
   }
 
-  async config () {
+  async config (sender) {
+    this.sender = sender
     this.sender = await this.sender // load in order
     // proxy all output by default
-    this.term.write = (...args) => this.io.write(...args)
+    this.term.write = value => this.io.write(value)
 
     // set reader api on term, use closures for security
     this.term.reader = () => {
@@ -48,16 +49,15 @@ class Command {
     return ret
   }
 
-  async shell (lines) {
+  async shell (lines, sender) {
     const next = await lines.shift()
-    await this.config()
+    await this.config(sender)
 
     if (!next) {
       return this.run()
     }
     this.next = next
-    await this.config()
-    return Promise.all([this.run(), next.shell(lines)])
+    return Promise.all([this.run(), next.shell(lines, this)])
   }
 }
 
