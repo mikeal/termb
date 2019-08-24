@@ -1,6 +1,7 @@
 
 const basics = async test => {
-  console.log('basic run')
+  const { stdout } = await test.shell('ls')
+  test.same(stdout, 'test.text\n')
 }
 
 export {

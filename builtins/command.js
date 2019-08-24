@@ -36,7 +36,7 @@ class Command {
     this.term.reader = () => {
       if (this.sender) return this.sender.io.pipe(new PassThrough())
       else {
-        let s = new PassThrough()
+        const s = new PassThrough()
         s.end()
         return s
       }
@@ -44,7 +44,7 @@ class Command {
   }
 
   async run () {
-    let ret = await this.module.cli(this.term)
+    const ret = await this.module.cli(this.term)
     this.io.end()
     return ret
   }
@@ -66,4 +66,3 @@ class Privileged extends Command {
 }
 
 export { Command, Privileged }
-

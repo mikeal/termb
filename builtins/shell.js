@@ -71,9 +71,8 @@ const shell = async (string, env) => {
 
     return lines
   }
-  
+
   const commands = parse(string)
-  let sender = null
   const first = await commands.shift()
   return first.shell(commands)
 }

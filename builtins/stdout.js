@@ -1,13 +1,18 @@
 import { Command } from './command.js'
 
 class Stdout extends Command {
+  get output () {
+    return process.stdout
+  }
+
   get name () {
     return 'stdout'
   }
+
   async run () {
-    let reader = this.term.reader()
+    const reader = this.term.reader()
     for await (const value of reader) {
-      process.stdout.write(value)
+      this.output.write(value)
     }
     this.io.end()
   }

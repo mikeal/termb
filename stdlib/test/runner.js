@@ -1,59 +1,87 @@
 class Test {
-  constructor (shellModule) {
+  constructor (shellModule, env) {
     this.shellModule = shellModule
+    this.env = () => Object.assign({}, env, this._env(env))
   }
+
+  _env (env) {
+    let stdout = ''
+    class Stdout extends env.Stdout {
+      get output () {
+        return {
+          write: value => {
+            stdout += value.toString()
+          }
+        }
+      }
+    }
+    const results = () => ({ stdout })
+    return { Stdout, results }
+  }
+
   ok (...args) {
-    for (let bool of args) {
+    for (const bool of args) {
       if (!bool) throw new Error('Fail')
     }
   }
+
   _compare (x, y) {
     return x === y
   }
+
   compare (...args) {
     let x = args.shift()
     while (args.length) {
-      let y = args.shift()
-      if (!this._compare(x, y)) throw new Error('Fail')
+      const y = args.shift()
+      if (!this._compare(x, y)) return false 
       x = y
     }
+    return true
   }
+
   same (...args) {
     if (!this.compare(...args)) throw new Error('Fail')
   }
-  shell (...args) {
-    return this.shellModule(...args)
+
+  async shell (string, env) {
+    env = Object.assign({}, this.env(), env)
+    await this.shellModule(string, env)
+    return env.results()
   }
 }
 
-const run = async (testModules, shellModule, concurrency=10) => {
-  let runs = []
+const run = async (testModules, shellModule, env, concurrency = 10) => {
+  const runs = []
   if (Array.isArray(testModules)) {
     throw new Error('Not implemented')
   }
-  
-  for (let [name, module] of Object.entries(testModules)) {
-    for (let [key, test] of Object.entries(module)) {
-      let t = new Test(shellModule)
+
+  for (const [name, module] of Object.entries(testModules)) {
+    for (const [key, test] of Object.entries(module)) {
+      const t = new Test(shellModule, env)
       t.module = name
       t.name = key
-      runs.push(() => test(t))
+      runs.push(async () => {
+        await test(t)
+        return t
+      })
     }
   }
-  let running = new Set() 
-  let _run = () => {
+  const running = new Set()
+  const _run = () => {
     if (runs.length) {
-      let p = runs.shift()()
+      const p = runs.shift()()
       p.then(() => running.delete(p))
       running.add(p)
     }
   }
 
   for (let i = 0; i < concurrency; i++) {
-    _run()  
+    _run()
   }
   while (running.size) {
-    await Promise.race(Array.from(running))
+    let test = await Promise.race(Array.from(running))
+    console.log('* test:passed', test.module + '/' + test.name)
     _run()
   }
 }

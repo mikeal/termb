@@ -14,9 +14,9 @@ const run = async () => {
     let runner = (await import('./stdlib/test/runner.js')).default
     if (args[1] === '--all') {
       let modules = await import('./tests/all.js')
-      await runner(modules, shell)
+      await runner(modules, shell, env)
     } else {
-      runner(args, shell)
+      await runner(args, shell, env)
     }
   } else {
     await shell(args.join(' '), env)

@@ -4,6 +4,7 @@ class Daemon extends Command {
   get name () {
     return 'daemon'
   }
+
   run () {
     this.io.end()
   }
