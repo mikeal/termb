@@ -5,6 +5,8 @@ import { PassThrough } from 'stream'
  * interact with.
  */
 
+const pass = () => new PassThrough({objectMode: true})
+
 class TerminalB {
   constructor (module, args, env) {
     this.appFS = new FS({})
@@ -17,27 +19,26 @@ class TerminalB {
   }
 }
 
-class Command {
+class Process {
   constructor (module, args, env) {
     this.module = module
     this.env = env
     this.term = new TerminalB(module, args, env)
-    this.io = new PassThrough()
+    this.io = pass()
     this._buffered = []
     this._pendingRead = false
   }
 
   async config (sender) {
-    this.sender = sender
-    this.sender = await this.sender // load in order
+    this.sender = await sender // load in order
     // proxy all output by default
     this.term.write = value => this.io.write(value)
 
     // set reader api on term, use closures for security
     this.term.reader = () => {
-      if (this.sender) return this.sender.io.pipe(new PassThrough())
+      if (this.sender) return this.sender.io.pipe(pass())
       else {
-        const s = new PassThrough()
+        const s = pass()
         s.end()
         return s
       }
@@ -53,6 +54,9 @@ class Command {
   async shell (lines, sender) {
     const next = await lines.shift()
     await this.config(sender)
+    if (!sender) {
+      // console.log((await Promise.all([this, next].concat(lines))).map(x => x.name))
+    }
 
     if (!next) {
       return this.run()
@@ -62,7 +66,7 @@ class Command {
   }
 }
 
-class Privileged extends Command {
+class Privileged extends Process {
   config (...args) {
     let ret = super.config(...args)
     this.term.env = this.env
@@ -70,4 +74,4 @@ class Privileged extends Command {
   }
 }
 
-export { Command, Privileged }
+export { Process, Privileged }

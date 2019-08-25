@@ -5,24 +5,24 @@ const __filename = fileURLToPath(import.meta.url)
 const __basedir = dirname(__filename)
 
 /* There are a few layers of priviledges here.
- * - builtin = Command class implementation, can do literally anything.
+ * - builtin = Process class implementation, can do literally anything.
  *   - example: pipe takes over output from console
  *   - these are how we instrument top level shell behavior, nothing else.
  *   - these are cached ahead of time and are not dynamically loaded.
- * - privileded = A command module that is instantiated with a priviledged
- *   Command instance. This gives the utility additional API, access to
+ * - privileded = A process module that is instantiated with a priviledged
+ *   Process instance. This gives the utility additional API, access to
  *   the local filesystem, etc.
- *   - still dynamically loaded like other commands, unlike builtins
+ *   - still dynamically loaded like other processes, unlike builtins
  * - user = Fully sandboxed application.
  *   - no access to FS other than its application specific fs
- *   - can read input but only from the api instrumented by a pipe command
+ *   - can read input but only from the api instrumented by a pipe process
  */
 
-const stdlib = new Set(['echo', 'ls', 'save', 'help'])
+const stdlib = new Set(['echo', 'cat', 'ls', 'save', 'help'])
 const helpers = new Set(['help', '-h', '--help'])
 
 const load = async (line, env) => {
-  if (!line) throw new Error('No command given to run')
+  if (!line) throw new Error('No process given to run')
 
   // standardized (forced) help forms
   if (helpers.has(line[1])) {
@@ -30,12 +30,15 @@ const load = async (line, env) => {
   }
 
   const [cmd, ...args] = line
-  if (!cmd) throw new Error('line is missing command')
-  const module = await import(__basedir + `/../stdlib/${cmd}.js`)
-  const _Class = stdlib.has(cmd) ? env.Privileged : env.Command
-  const command = new _Class(module, args, env)
-  command.name = cmd
-  return command
+  if (!cmd) throw new Error('line is missing process')
+  const module = await import(
+    /* webpackIgnore: true */
+    __basedir + `/../stdlib/${cmd}.js`
+  )
+  const _Class = stdlib.has(cmd) ? env.Privileged : env.Process
+  const process = new _Class(module, args, env)
+  process.name = cmd
+  return process
 }
 
 const separators = new Set(['&', '&&', '|', '>'])
@@ -59,22 +62,27 @@ const shell = async (string, env) => {
         // eslint-ignore-else
         if (part === '&') lc(new env.Stdout(...defaults), new env.Daemon(...defaults))
         else if (part === '&&') lc(new env.Stdout(...defaults), new env.After(...defaults))
-        else if (part === '>') split = ['|', 'save'].concat(split)
+        else if (part === '>') { split.unshift('save') }
         // note that we do nothing on pipe, the default behavior
-        // is for one commands output to be sent to the next.
+        // is for one processes output to be sent to the next.
       } else {
         line.push(part)
       }
     }
-    if (line.length) lc(new env.Stdout(), load(line, env))
+    if (line.length) {
+      if (line[0] !== 'save') {
+        lines.push(new env.Stdout())
+      }
+      lines.push(load(line, env))
+    }
     if (!(lines[lines.length - 1] instanceof env.Daemon)) lines.push(new env.Stdout(...defaults))
 
     return lines
   }
 
-  const commands = parse(string)
-  const first = await commands.shift()
-  return first.shell(commands)
+  const processes = parse(string)
+  const first = await processes.shift()
+  return first.shell(processes)
 }
 
 export default shell

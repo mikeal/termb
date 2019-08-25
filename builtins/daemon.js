@@ -1,6 +1,6 @@
-import { Command } from './command.js'
+import { Process } from './process.js'
 
-class Daemon extends Command {
+class Daemon extends Process {
   get name () {
     return 'daemon'
   }

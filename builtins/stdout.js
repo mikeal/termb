@@ -1,6 +1,6 @@
-import { Command } from './command.js'
+import { Process } from './process.js'
 
-class Stdout extends Command {
+class Stdout extends Process {
   get output () {
     return process.stdout
   }

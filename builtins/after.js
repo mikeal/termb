@@ -1,6 +1,6 @@
-import { Command } from './command.js'
+import { Process } from './process.js'
 
-class After extends Command {
+class After extends Process {
   get name () {
     return 'after'
   }
@@ -10,7 +10,7 @@ class After extends Command {
     this.io.end()
   }
 
-  async shell (commands, sender) {
+  async shell (processes, sender) {
     if (!sender) throw new Error('Sender required')
     const generator = sender.io[Symbol.asyncIterator]()
 
@@ -18,7 +18,7 @@ class After extends Command {
       const { done } = await generator.next()
       if (done) break
     }
-    return super.shell(commands, this)
+    return super.shell(processes, this)
   }
 }
 
