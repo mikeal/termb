@@ -5,7 +5,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "./cli.js test --all"
+    "test": "./cli.js test"
   },
   "keywords": [],
   "author": "Mikeal Rogers <mikeal.rogers@gmail.com> (https://www.mikealrogers.com/)",
@@ -13,10 +13,13 @@
   "devDependencies": {
     "babel-eslint": "^10.0.2",
     "c8": "^5.0.1",
-    "hundreds": "0.0.2"
+    "hundreds": "0.0.2",
+    "puppeteer": "^1.19.0"
   },
   "dependencies": {
-    "standard": "^14.0.2"
+    "micro": "^9.3.4",
+    "standard": "^14.0.2",
+    "xterm": "^3.14.5"
   },
   "standard": {
     "parser": "babel-eslint",

@@ -48,7 +48,7 @@ const shell = async (string, env) => {
   const parse = string => {
     let line = []
     const lines = []
-    let split = string.split(' ')
+    const split = string.split(' ')
 
     const lc = (...args) => args.forEach(a => lines.push(a))
 

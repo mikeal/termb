@@ -35,7 +35,7 @@ class Test {
     let x = args.shift()
     while (args.length) {
       const y = args.shift()
-      if (!this._compare(x, y)) return false 
+      if (!this._compare(x, y)) return false
       x = y
     }
     return true
@@ -82,7 +82,7 @@ const run = async (testModules, shellModule, env, concurrency = 10) => {
     _run()
   }
   while (running.size) {
-    let test = await Promise.race(Array.from(running))
+    const test = await Promise.race(Array.from(running))
     console.log('* test:passed', test.module + '/' + test.name)
     _run()
   }

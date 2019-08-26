@@ -16,7 +16,7 @@ class FS {
   }
 }
 
-// temporary, for development only 
+// temporary, for development only
 const userFS = new FS({})
 
 export { userFS, FS }

@@ -5,5 +5,5 @@ const printText = async test => {
 }
 
 export {
-  printText 
+  printText
 }

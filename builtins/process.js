@@ -5,7 +5,7 @@ import { PassThrough } from 'stream'
  * interact with.
  */
 
-const pass = () => new PassThrough({objectMode: true})
+const pass = () => new PassThrough({ objectMode: true })
 
 class TerminalB {
   constructor (module, args, env) {
@@ -68,7 +68,7 @@ class Process {
 
 class Privileged extends Process {
   config (...args) {
-    let ret = super.config(...args)
+    const ret = super.config(...args)
     this.term.env = this.env
     return ret
   }
